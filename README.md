@@ -1,10 +1,10 @@
 # Thinking Loops
 
-**Autonomous overnight strategy for OpenClaw. Spots what you're avoiding. Delivers one action by morning.**
+OpenClaw skill. Sets up overnight AI thinking — 3 cycles that run while you sleep, each one trying to poke holes in the last. You wake up to a file with the reasoning and one thing to do today.
 
-## Here's what I actually got this morning
+## What this actually looks like
 
-My Telegram, 8:04 AM:
+8:04 AM, Telegram:
 
 ```
 🌅 Today: Post your landing page in r/SaaS for feedback
@@ -12,23 +12,23 @@ My Telegram, 8:04 AM:
 📎 Full reasoning attached
 ```
 
-And the attached file had 3 cycles of thinking — hypotheses, counter-arguments, competitor research, everything stress-tested against real data. The AI found 2 competitors I didn't know about, killed an idea I was excited about (the market was already saturated), and landed on one thing worth doing today.
+The attached file: 3 rounds of hypotheses, counter-arguments, competitor searches. Found 2 competitors I missed. Killed an idea I liked (market was taken). Landed on one action.
 
-But the part that got me was week 2. After 14 days of daily actions, the system said:
+The more interesting part came after two weeks. The system had 14 days of data — which actions I did, which I skipped. It said:
 
-> "You've completed 9 out of 14 actions. All 9 were research or planning. All 5 you skipped involved reaching out to people. You're not stuck on strategy — you're avoiding external validation."
+> "9 out of 14 completed. All 9 were research or planning. All 5 skipped were outreach. You're not stuck on strategy. You're avoiding putting yourself out there."
 
-It was right. I wouldn't have seen that pattern myself.
+I didn't see that pattern. It did.
 
-## Why not just use ChatGPT?
+## How it's different from ChatGPT
 
-Three real differences, not marketing:
+ChatGPT waits for you to open it. This runs at 2am whether you asked or not.
 
-1. **It thinks while you sleep.** Three separate AI sessions run overnight, each one challenging the previous. By morning, weak ideas are dead and one action survives. ChatGPT waits for you to open it. Claude's scheduled tasks only work while your laptop is open.
+It runs 3 separate sessions overnight, each one reading the previous cold — like handing your draft to a different person. Claude's scheduled tasks need your laptop open. This runs on a server.
 
-2. **It has your full history.** After a week, it knows what you do and what you avoid. After two weeks, it sees patterns you don't. ChatGPT starts fresh every conversation.
+After a week it has your history. After two it sees patterns — what you do, what you dodge. ChatGPT starts blank every time.
 
-3. **It pulls real data every cycle.** Competitors, Reddit threads, market signals — not training data from 2024, but what people are saying right now. Every cycle searches the web. No exceptions.
+Every cycle searches the web. Real competitors, real Reddit threads, real market data. Not 2024 training data.
 
 ## Install
 
@@ -36,63 +36,64 @@ Three real differences, not marketing:
 clawhub install thinking-loops
 ```
 
+Or clone from GitHub:
+```bash
+git clone https://github.com/davitttttt/thinking-loops ~/.openclaw/skills/thinking-loops
+```
+
 ## Setup
 
-You need a machine that stays on overnight — a VPS, home server, Raspberry Pi, or a laptop that doesn't sleep. The skill runs cron jobs from 2am to 4:30am.
+Needs a machine that stays on overnight. VPS, home server, Raspberry Pi, whatever — as long as it doesn't sleep from 2am to 4am.
 
-### Step 1: Add cron jobs
+### Cron jobs
 
 ```bash
-# Cycle 1 — Analyze everything, generate hypotheses
+# Cycle 1 — reads your context, generates hypotheses, searches the web
 openclaw cron add --name "think-1" --schedule "0 2 * * *" --target isolated --announce \
   --prompt "Thinking Loops: Cycle 1. Read all memory/ files and user context. What's really going on? Generate hypotheses. web_search required. Save to memory/night-cycle-\$(date +\%Y-\%m-\%d).md"
 
-# Cycle 2 — Try to kill cycle 1's conclusions
+# Cycle 2 — tries to kill cycle 1's conclusions
 openclaw cron add --name "think-2" --schedule "0 3 * * *" --target isolated \
   --prompt "Thinking Loops: Cycle 2. Read cycle 1 from today's night-cycle file. Challenge everything. Counter-arguments + web_search. Append to same file."
 
-# Cycle 3 — Compress to one action, deliver to chat
+# Cycle 3 — picks one action, sends you the file
 openclaw cron add --name "think-3" --schedule "0 4 * * *" --target isolated --announce \
   --prompt "Thinking Loops: Cycle 3 (Final). Read cycles 1-2. Compress into ONE action. Send the night-cycle file + 3-line morning message to the user's chat."
 ```
 
-Adjust times for your timezone. The key is 1-hour gaps between cycles.
+Change times for your timezone. Hour gaps between cycles matter — that's what makes cycle 2 actually challenge cycle 1 instead of just agreeing with itself.
 
-### Step 2: Talk to it
+### First run
 
-On first interaction, the skill asks 4 questions to understand your situation. Just answer naturally — no forms.
+The skill asks 4 questions when you first talk to it: what you're working on, what stage, what you're avoiding, how much time you have. Just answer normally.
 
-### Step 3: Sleep
+### Then sleep
 
-Tomorrow morning you'll get your first message.
+You'll get your first message tomorrow morning.
 
 ## How it works
 
 ```
-02:00  Cycle 1 — Hypotheses + web research
-         ↓ (1 hour gap — fresh session)
-03:00  Cycle 2 — Counter-arguments, kill weak ideas
-         ↓ (1 hour gap — fresh session)
-04:00  Cycle 3 — Compress → 1 action → deliver to chat
+02:00  Cycle 1 — hypotheses + web research
+         ↓ (1 hour)
+03:00  Cycle 2 — counter-arguments, kill weak ideas
+         ↓ (1 hour)
+04:00  Cycle 3 — one action → send to chat
 ```
 
-Each cycle is a completely separate AI session. Cycle 2 reads cycle 1's file cold, like a different person reviewing your work. That's why the time gaps matter — it's not one long response pretending to self-correct.
+Three separate AI sessions. Cycle 2 reads cycle 1's output like a stranger reviewing someone else's work. That gap is the whole point.
 
-## What we learned building this
+## Things that broke while we built this
 
-We've been running this on ourselves for weeks. Three things kept breaking:
+**The AI caught our procrastination.** When we stalled on decisions, it started stalling too. "Maybe we should consider more options." We call this pattern contagion — the AI mirrors your dysfunction. Fixed it by making the system do the opposite: you hesitate, it decides. You scatter, it focuses.
 
-**Pattern Contagion.** The AI started mirroring our bad habits. When we procrastinated, it got cautious — "maybe we should explore more options" instead of "do this." We built in the opposite: when you hesitate, it decides. When you scatter, it focuses. Complement, not mirror.
+**Thinking went in circles.** After 3 rounds with no new data, the output turned into reflection about reflection. Sounded deep, said nothing. Now every cycle has to search the web. If it can't find real data, it says so — but it can't skip the search.
 
-**Thinking expires.** After 3 cycles without real data, the AI produces reflection about reflection — sounds smart, means nothing. Now every cycle is required to search the web. No data, no cycle.
-
-**Too many options kills action.** Early versions gave 5 recommendations. Nobody did any of them. Now it gives one. Just one. If you don't do it, it adapts — but it never gives you a menu.
+**Five recommendations, zero done.** Early versions gave a list. Nobody did any of them. Now it picks one. If you skip it, it adjusts next time. But it never gives you a menu.
 
 ## Cost
 
-The skill is free. You pay for API calls:
-- **~$4-8/month** with Sonnet (3 cycles/night)
-- Works with any model OpenClaw supports
+Skill is free. API calls cost ~$4-8/month with Sonnet. Works with whatever model you have.
 
 ## License
 
